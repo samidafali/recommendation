@@ -21,6 +21,26 @@ client = MongoClient(os.getenv("MONGO_URI"))
 db = client['test']  # Remplacez par le nom de votre base de données
 courses_collection = db['courses']
 
+def serialize_course(course):
+    """
+    Convert all ObjectId fields in the course document to strings.
+    """
+    if '_id' in course:
+        course['_id'] = str(course['_id'])
+    
+    if 'enrolledUsers' in course:
+        course['enrolledUsers'] = [str(user) for user in course['enrolledUsers']]
+    
+    if 'enrolledteacher' in course:
+        course['enrolledteacher'] = [str(teacher) for teacher in course['enrolledteacher']]
+    
+    if 'videos' in course:
+        for video in course['videos']:
+            if '_id' in video:
+                video['_id'] = str(video['_id'])
+    
+    return course
+
 @app.route('/recommend', methods=['POST'])
 def recommend_course():
     logging.debug("Received request for course recommendation.")
@@ -53,13 +73,7 @@ def recommend_course():
     logging.debug(f"Recommended course found: {recommended_course}")
 
     # Convertir les ObjectId en chaînes de caractères
-    recommended_course['_id'] = str(recommended_course['_id'])
-    for i in range(len(recommended_course['enrolledUsers'])):
-        recommended_course['enrolledUsers'][i] = str(recommended_course['enrolledUsers'][i])
-    
-    # Convertir tous les ObjectId dans les vidéos
-    for video in recommended_course.get('videos', []):
-        video['_id'] = str(video['_id'])  # Convertir chaque ObjectId en chaîne de caractères
+    recommended_course = serialize_course(recommended_course)
 
     # Loguer la réponse avant de la retourner
     logging.debug(f"Response being sent: {recommended_course}")
@@ -67,7 +81,6 @@ def recommend_course():
     # Retourner le cours recommandé
     return jsonify({"recommended_course": recommended_course}), 200
 
-    logging.debug("Received request for course categories.")
 @app.route('/categories', methods=['GET'])
 def get_categories():
     logging.debug("Received request for course categories.")
@@ -87,4 +100,4 @@ def get_categories():
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, port=5004)
