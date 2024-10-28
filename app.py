@@ -99,5 +99,5 @@ def get_categories():
     return jsonify({"categories": unique_categories}), 200
 
 
-if __name__ == '__main__':
-    app.run(debug=True, port=5004)
+#if __name__ == '__main__':
+   # app.run(debug=True, port=5004)
